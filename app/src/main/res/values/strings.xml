@@ -1,0 +1,16 @@
+<resources>
+    <string name="app_name">WorkoutApp</string>
+    <string name="welcome">Добро пожаловать!</string>
+    <string name="enter_id">Введите ID тренировки, чтобы начать</string>
+    <string name="error">Произошла ошибка, попробуйте снова</string>
+    <string name="loading">Загрузить</string>
+    <string name="timer">Таймер</string>
+    <string name="map">Карта</string>
+    <string name="map_placeholder">Тестовое задание от Ильгиза</string>
+    <string name="finish">Финиш!</string>
+    <string name="stop">Стоп</string>
+    <string name="restart">Начать заново</string>
+    <string name="start">Старт</string>
+    <string name="resume">Продолжить</string>
+    <string name="total_time">Общее время</string>
+</resources>
