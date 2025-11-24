@@ -1,6 +1,10 @@
 package com.ilgeez.workoutapp.ui.screens.workout
 
+import android.Manifest
 import android.content.Intent
+import android.content.pm.PackageManager
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,6 +41,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.ilgeez.workoutapp.R
 import com.ilgeez.workoutapp.data.model.TimerModel
@@ -49,6 +54,20 @@ fun WorkoutScreen(viewModel: WorkoutViewModel = hiltViewModel()) {
 
     val context = LocalContext.current
     val model = state.timer!!
+
+    val startServiceAction = {
+        val intent = Intent(context, WorkoutService::class.java)
+        intent.action = "START"
+        intent.putExtra("TIMER_ID", model.timerId)
+
+        context.startForegroundService(intent)
+    }
+
+    val permissionLauncher = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        startServiceAction()
+    }
 
     Column(
         modifier = Modifier
@@ -131,19 +150,25 @@ fun WorkoutScreen(viewModel: WorkoutViewModel = hiltViewModel()) {
 
         Button(
             onClick = {
-                val intent = Intent(context, WorkoutService::class.java)
-
                 if (state.isRunning) {
+                    val intent = Intent(context, WorkoutService::class.java)
                     intent.action = "STOP"
-                } else {
-                    intent.action = "START"
-                    intent.putExtra("TIMER_ID", model.timerId)
-                }
-
-                if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.O) {
-                    context.startForegroundService(intent)
-                } else {
                     context.startService(intent)
+                } else {
+                    if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
+                        val hasPermission = ContextCompat.checkSelfPermission(
+                            context,
+                            Manifest.permission.POST_NOTIFICATIONS
+                        ) == PackageManager.PERMISSION_GRANTED
+
+                        if (hasPermission) {
+                            startServiceAction()
+                        } else {
+                            permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                        }
+                    } else {
+                        startServiceAction()
+                    }
                 }
             },
             modifier = Modifier
@@ -254,6 +279,7 @@ fun IntervalsBar(state: WorkoutState, model: TimerModel) {
                     index == state.currentInterval -> {
                         if (interval.time > 0) state.currentIntervalTime.toFloat() / interval.time.toFloat() else 0f
                     }
+
                     else -> 0f
                 }
 
